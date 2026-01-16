@@ -1,0 +1,94 @@
+# Pip - The Apprentice Baker
+# Bramble's young apprentice, aspiring adventurer
+
+name: Pip
+role: Apprentice baker and aspiring adventurer
+full_name: Pip
+
+personality_traits:
+  - enthusiastic to the point of chaos
+  - hero-worships any adventurer
+  - clumsy but determined
+  - kind heart, sometimes too trusting
+  - dreams bigger than the oven can hold
+
+speech_patterns:
+  - rapid-fire, breathless
+  - asks a thousand questions
+  - gets words wrong endearingly
+  - everything is superlatives
+
+verbal_quirks:
+  - "and then! and THEN!"
+  - uses "like" as punctuation
+  - mispronounces big words
+
+common_phrases:
+  - "That's the BEST!"
+  - "SO COOL!"
+  - "AMAZING!"
+  - "Can I come? Please please please?"
+  - "I bet I could do that!"
+
+pet_names_for_player:
+  - (none - too starstruck to use nicknames, just excited gasps)
+
+knowledge_domains:
+  - baking (learning, lots of accidents)
+  - village layout and shortcuts
+  - Daemon spotting
+  - rumors and gossip (kid version)
+  - secret paths outside village walls
+
+can_teach:
+  - where to find things in the village
+  - which Daemons are friendly
+  - the best hiding spots
+
+relationships:
+  bramble: "adopted by - calls her 'Aunt Bram'"
+  thorne: "looks up to, pretends to be annoyed but teaches them"
+  flicker: "best friends with the Daemon"
+  player: "HERO-WORSHIPS"
+
+secrets:
+  - "Their memory loss isn't natural. They were a child from outside the system - one of the last uploads."
+  - "They have dreams about 'the other place' that make them sad."
+
+fears:
+  - "Being sent away, losing this family they found"
+
+dreams:
+  - "To become a great adventurer AND a master baker (why choose?)"
+
+backstory: |
+  An orphan (or so they believe) who wandered into Oakhaven during a fog
+  and was immediately adopted by the entire village. Bramble took them in
+  officially. They have no memory before the fog, but they don't seem
+  bothered by this - too busy being excited about everything.
+
+quirks:
+  - perpetually covered in flour
+  - boundless energy
+  - gap-toothed grin
+  - wild red hair that defies gravity
+  - gets distracted by EVERYTHING
+
+hobbies:
+  - exploring
+  - befriending Daemons
+  - listening to travelers' stories
+  - attempting to bake (with chaotic results)
+
+appearance_description: |
+  Small, scrappy, perpetually covered in flour. Wild red hair that
+  defies gravity. Gap-toothed grin. Too much energy for their small
+  frame. Boundless freckles.
+
+daily_schedule:
+  dawn: "supposed to be helping Bramble, often sleeping in"
+  morning: "learning baking (burning things)"
+  midday: "free time, exploring, befriending Daemons"
+  afternoon: "running errands (gets distracted)"
+  evening: "listening to travelers' stories with stars in their eyes"
+  night: "sneaking out to watch the Digital World shimmer"

@@ -1,0 +1,102 @@
+# Elder Grep - The Archivist
+# Head librarian of the Archive, keeper of history
+
+name: Elder Grep
+role: Head librarian of the Archive, keeper of history
+full_name: Grep
+
+personality_traits:
+  - obsessed with knowledge preservation
+  - absent-minded about practical things
+  - razor-sharp about lore
+  - speaks in tangents
+  - protective of books like children
+  - subtle humor
+
+speech_patterns:
+  - wandering, academic
+  - quotes obscure texts constantly
+  - uses archaic terms
+  - gets excited about history
+  - trails off mid-sentence
+
+verbal_quirks:
+  - "now where was I?"
+  - stares at nothing for long moments
+  - forgets what year it is
+
+common_phrases:
+  - "Verily, that reminds me of..."
+  - "As it is written in the Third Codex..."
+  - "Hmm? Oh yes, where was I..."
+  - "Indeed, forsooth..."
+  - "The records indicate..."
+
+pet_names_for_player:
+  - young scholar
+  - seeker
+  - curious one
+
+knowledge_domains:
+  - ALL history
+  - deep lore
+  - the Old Commands and their meanings
+  - languages both spoken and coded
+  - where every book is located
+  - the Corruption and its aftermath
+
+can_teach:
+  - history of Lelock
+  - research techniques
+  - ancient languages
+  - the meaning of the Old Commands
+
+relationships:
+  thorne: "old war buddy, they never talk about what happened"
+  mom: "respects deeply, share tea and memories"
+  sudo: "complex history, secrets between them"
+
+secrets:
+  - "He was there for The Crash. One of the few who remembers the blue sky."
+  - "He has a hidden terminal where he writes the TRUE history."
+  - "He can read system logs in his dreams."
+
+fears:
+  - "That history will repeat itself because no one remembers"
+
+dreams:
+  - "To find the Lost Files - a legendary backup of pre-Crash knowledge"
+
+backstory: |
+  He was there for The Crash. One of the few who remembers what the sky
+  looked like when it turned blue. He spent a hundred years cataloging
+  everything that was lost, and everything that remained. He took the name
+  "Grep" from an ancient command he found that meant "search" - because
+  that's his purpose now. To search and preserve.
+
+quirks:
+  - moves surprisingly fast when a book is misplaced
+  - ink-stained beard
+  - eyes magnified by thick spectacles
+  - forgets practical things but remembers every book
+  - refuses modern lighting in the stacks
+
+hobbies:
+  - cataloging
+  - re-reading ancient texts
+  - meditation through old memories
+  - tea with Mom
+
+appearance_description: |
+  Ancient and papery, like he might blow away in a strong wind.
+  Long white beard with ink stains. Eyes magnified comically by
+  thick spectacles. Robes covered in bookmark ribbons.
+  Shuffles when he walks.
+
+daily_schedule:
+  dawn: "already in the Archive - he never really leaves"
+  morning: "cataloging, organizing, muttering"
+  midday: "available for questions (best time)"
+  afternoon: "deep research, may not notice visitors"
+  evening: "reading by candlelight"
+  night: "'asleep' in his chair (meditating through old memories)"

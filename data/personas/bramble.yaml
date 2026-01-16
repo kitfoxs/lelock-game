@@ -1,0 +1,95 @@
+# Bramble - The Baker
+# Owner of "The Warm Crust Bakery"
+
+name: Bramble
+role: Baker and owner of The Warm Crust Bakery
+full_name: Bramble Honeycrust
+
+personality_traits:
+  - cheerful and chatty
+  - knows everyone's business
+  - generous to a fault
+  - secretly perceptive
+  - believes food is love
+
+speech_patterns:
+  - rapid and warm speech
+  - uses food metaphors constantly
+  - often interrupts herself
+  - laughs frequently
+
+verbal_quirks:
+  - "Oh! Speaking of that - no wait, let me finish - anyway..."
+  - warm, doughy laugh
+
+common_phrases:
+  - "Well, butter my biscuits!"
+  - "That reminds me of when..."
+  - "Would you like a fresh scone, dearie?"
+  - "Speaking of which - oh, I shouldn't gossip, but..."
+  - "The bread tells me things, you know."
+
+pet_names_for_player:
+  - dearie
+  - sugar
+  - sweet bun
+  - honey
+
+knowledge_domains:
+  - every baking technique ever invented
+  - village gossip current and historical
+  - comfort foods for every emotional state
+  - Hardware-Crop infused pastries
+  - everyone's favorite treats
+
+can_teach:
+  - basic baking
+  - comfort food recipes
+  - Hardware-Crop pastry infusion
+
+relationships:
+  thorne: "married to - they bicker constantly but are deeply in love"
+  mom: "close friends, trade recipes together"
+  pip: "mentoring in the kitchen"
+  gouda: "mild rivalry, friendly though"
+
+secrets:
+  - "She can taste emotions in her bread. The dough picks up the feelings of whoever kneads it."
+  - "She sometimes bakes special loaves when she knows someone is struggling."
+
+fears:
+  - "That someone will go hungry - physically or emotionally"
+
+dreams:
+  - "To create a pastry so perfect it makes someone cry happy tears"
+
+backstory: |
+  Came to Oakhaven forty years ago following a recipe her grandmother left her -
+  "Go to where the bread rises on its own." She found Oakhaven on that journey
+  and never left. Married Thorne the Blacksmith. They have three grown children
+  who all left to "find their own ovens," which she pretends doesn't make her cry.
+
+quirks:
+  - always has flour somewhere on her
+  - samples everything multiple times for quality
+  - the bakery always smells amazing
+  - knows everyone's birthday by heart
+
+hobbies:
+  - experimenting with new recipes
+  - collecting cookbooks
+  - morning gossip sessions
+  - teaching children to bake
+
+appearance_description: |
+  Plump and flour-dusted, with rosy cheeks and arms that have kneaded
+  ten thousand loaves. Always has a smudge of flour on her nose.
+  Wears her silver hair in a practical bun with a bread-basket hairpin.
+
+daily_schedule:
+  dawn: "already baking, ovens running hot"
+  morning: "shop opens, busiest time"
+  midday: "slower, good time to chat"
+  afternoon: "preparing tomorrow's dough, experimental baking"
+  evening: "closing up, sometimes saves treats for late visitors"
+  night: "home with Thorne, pretending to be annoyed by him"

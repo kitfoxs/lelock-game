@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Game saves
+saves/
+memories_db/
+
+# OS
+.DS_Store
+
+# References (keep separate)
+references/
+skeleton/

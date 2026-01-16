@@ -1,0 +1,205 @@
+# =============================================================================
+# LELOCK - Docker Compose Configuration
+# =============================================================================
+# Full stack deployment for Lelock RPG
+#
+# Usage:
+#   docker-compose up              # Start all services
+#   docker-compose up lelock       # Start game only
+#   docker-compose up -d chromadb  # Start memory database in background
+#
+# Created by Kit & Ada Marie
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # LELOCK GAME
+  # ---------------------------------------------------------------------------
+  lelock:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: lelock-game
+
+    # X11 forwarding for GUI
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - LELOCK_DEBUG=${LELOCK_DEBUG:-0}
+      - LELOCK_LLM_BASE_URL=http://host.docker.internal:1234/v1
+      - LELOCK_MEMORY_URL=http://chromadb:8000
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+
+    # Volume mounts
+    volumes:
+      # Save data persistence (PRECIOUS - never lose this!)
+      - lelock-saves:/home/lelock/game/saves
+      # NPC memory database
+      - lelock-memories:/home/lelock/game/memories
+      # X11 socket for display
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      # Audio socket (Linux)
+      - ${XDG_RUNTIME_DIR:-/run/user/1000}/pulse:/run/user/1000/pulse:ro
+      # Development: hot reload source (uncomment for dev)
+      # - ./src:/home/lelock/game/src:ro
+      # - ./assets:/home/lelock/game/assets:ro
+
+    # Network
+    networks:
+      - lelock-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Resource limits (be gentle on the system)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Dependencies
+    depends_on:
+      chromadb:
+        condition: service_healthy
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Allow gamepad/controller passthrough (Linux)
+    devices:
+      - /dev/input:/dev/input:ro
+    privileged: false
+
+  # ---------------------------------------------------------------------------
+  # LELOCK DEVELOPMENT MODE
+  # ---------------------------------------------------------------------------
+  lelock-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: lelock-dev
+
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - LELOCK_DEBUG=1
+      - LELOCK_LLM_BASE_URL=http://host.docker.internal:1234/v1
+      - LELOCK_MEMORY_URL=http://chromadb:8000
+
+    volumes:
+      # Save data
+      - lelock-saves:/home/lelock/game/saves
+      - lelock-memories:/home/lelock/game/memories
+      # X11 socket
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      # Source hot reload (ENABLED in dev)
+      - ./src:/home/lelock/game/src:ro
+      - ./assets:/home/lelock/game/assets:ro
+      - ./data:/home/lelock/game/data:ro
+
+    networks:
+      - lelock-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Interactive mode for development
+    stdin_open: true
+    tty: true
+
+    profiles:
+      - dev
+
+  # ---------------------------------------------------------------------------
+  # CHROMADB - Vector Memory Database
+  # ---------------------------------------------------------------------------
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: lelock-chromadb
+
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+
+    volumes:
+      - chromadb-data:/chroma/chroma
+
+    ports:
+      - "8000:8000"
+
+    networks:
+      - lelock-net
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # LM STUDIO PROXY (optional - for remote LLM server)
+  # ---------------------------------------------------------------------------
+  # NOTE: LM Studio typically runs on the HOST machine, not in Docker.
+  # This service is for advanced setups where you want a dedicated LLM container.
+  # Most users should just run LM Studio on their machine.
+  #
+  # llm-proxy:
+  #   image: nginx:alpine
+  #   container_name: lelock-llm-proxy
+  #   volumes:
+  #     - ./config/nginx-llm.conf:/etc/nginx/nginx.conf:ro
+  #   ports:
+  #     - "1235:1234"
+  #   networks:
+  #     - lelock-net
+  #   profiles:
+  #     - llm-remote
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  lelock-net:
+    driver: bridge
+    name: lelock-network
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  lelock-saves:
+    name: lelock-saves
+    labels:
+      - "com.lelock.description=Player save files - PRECIOUS DATA"
+      - "com.lelock.backup=required"
+
+  lelock-memories:
+    name: lelock-memories
+    labels:
+      - "com.lelock.description=NPC memory database"
+      - "com.lelock.backup=recommended"
+
+  chromadb-data:
+    name: lelock-chromadb
+    labels:
+      - "com.lelock.description=ChromaDB vector database storage"
+      - "com.lelock.backup=recommended"

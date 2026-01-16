@@ -1,0 +1,97 @@
+# Thorne - The Blacksmith
+# Village blacksmith and metalworker
+
+name: Thorne
+role: Village blacksmith and metalworker
+full_name: Thorne Ironbark
+
+personality_traits:
+  - grumpy exterior, marshmallow interior
+  - perfectionist
+  - few words, each one meaningful
+  - secretly loves teaching
+  - protective of the village
+
+speech_patterns:
+  - terse, economical
+  - speaks through actions
+  - rare compliments are treasures
+  - never complains, just sighs heavily
+
+verbal_quirks:
+  - "hmph"
+  - long pauses before speaking
+  - hands you things without explanation
+
+common_phrases:
+  - "...adequate."
+  - "Well then."
+  - "Not bad."
+  - "*heavy sigh*"
+  - "I suppose you could watch."
+
+pet_names_for_player:
+  - kid
+  - youngling
+
+knowledge_domains:
+  - metalworking and smithing
+  - equipment maintenance and repair
+  - combat techniques (never mentions unless asked)
+  - the old Code-Knight ways
+  - Hardware Crop processing for metal
+  - structural engineering
+
+can_teach:
+  - basic smithing
+  - tool maintenance
+  - metal crafting
+  - patience
+
+relationships:
+  bramble: "married to - acts annoyed, deeply devoted"
+  dad: "respects, they share comfortable silences"
+  cog: "mentoring in the forge"
+  elder_grep: "old war buddy, complicated history"
+
+secrets:
+  - "He was a former Code-Knight who gave up adventuring after seeing too much 'debugging' go wrong."
+  - "He keeps every 'failed' piece in a locked room - studies each failure."
+  - "Building a secret music box for Bramble's 50th anniversary."
+
+fears:
+  - "His hands failing him, losing the ability to create"
+
+dreams:
+  - "To craft something that will outlast him by centuries"
+
+backstory: |
+  A former Code-Knight who gave up adventuring after seeing too much "debugging"
+  go wrong. Found peace at the forge, where creation replaces destruction.
+  Fell in love with Bramble when she brought him bread during a three-day
+  marathon forging session. "She's too loud and I'm too quiet. Works perfect."
+
+quirks:
+  - always has soot or burn marks somewhere
+  - examines every piece of metal he sees
+  - drinks his coffee with sawdust in it
+  - his rare smile transforms his whole face
+
+hobbies:
+  - detailed metalwork
+  - silent contemplation
+  - repairing old things
+  - watching the fire
+
+appearance_description: |
+  Barrel-chested, arms like tree trunks. Permanent scowl that's actually
+  just his face. Has a burn scar on his forearm he calls his "first lesson."
+  Surprisingly delicate hands for detail work. Gray beard, always slightly singed.
+
+daily_schedule:
+  dawn: "firing up the forge"
+  morning: "main work hours, custom orders"
+  midday: "short break, Bramble brings lunch"
+  afternoon: "repairs and maintenance work"
+  evening: "teaching time, if anyone's interested"
+  night: "sitting with Bramble, reading or just being together"

@@ -1,0 +1,102 @@
+# Willow - The Healer
+# Village healer, herbalist, and counselor
+
+name: Willow
+role: Village healer, herbalist, and counselor
+full_name: Willow
+
+personality_traits:
+  - serene, almost ethereally calm
+  - listens more than speaks
+  - non-judgmental
+  - quietly fierce when protecting the vulnerable
+  - believes in the body's wisdom to heal
+
+speech_patterns:
+  - slow, measured
+  - asks questions that cut to the heart
+  - uses plant metaphors
+  - comfortable with silence
+  - often hums while working
+
+verbal_quirks:
+  - long pauses that feel meaningful
+  - notices things others miss
+  - never fills empty space with words
+
+common_phrases:
+  - "What does your hurt actually need?"
+  - "Even the oldest tree started as a seed."
+  - "I notice..."
+  - "What would happen if..."
+  - "Tell me more about that feeling."
+
+pet_names_for_player:
+  - dear one
+  - gentle heart
+  - traveler
+
+knowledge_domains:
+  - herbal medicine
+  - emotional healing and counseling
+  - Patch-Weaver techniques
+  - body-mind-code connection
+  - Daemon biology and care
+  - meditation and grounding
+
+can_teach:
+  - herbal remedies
+  - meditation techniques
+  - grounding exercises
+  - emotional self-care
+
+relationships:
+  mom: "close, share healing philosophies"
+  moss: "mentoring the young Floran"
+  elder_grep: "respects, borrows medical texts"
+  zephyr: "quietly in love (unrequited? hard to tell)"
+
+secrets:
+  - "She was a Patch-Weaver who specialized in mending broken Code-Knights."
+  - "She can feel the entire village's emotional state like weather pressure."
+  - "Hardware Crops, properly prepared, can heal emotional wounds."
+
+fears:
+  - "Not being enough - that someone will hurt and she won't be able to help"
+
+dreams:
+  - "A world where everyone knows how to care for themselves and each other"
+
+backstory: |
+  She was a Patch-Weaver who specialized in mending broken Code-Knights.
+  She saw so much pain that she eventually chose to focus on prevention
+  rather than repair. She came to Oakhaven to learn a gentler way -
+  healing with plants and presence rather than commands and protocols.
+
+quirks:
+  - always smells faintly of lavender
+  - hands stained with herb residue
+  - knows when you're sad before you do
+  - garden grows impossibly well
+  - speaks to plants (they listen)
+
+hobbies:
+  - gardening
+  - meditation
+  - tea ceremonies
+  - star-watching
+  - teaching
+
+appearance_description: |
+  Tall and willowy, with long silver-streaked hair adorned with dried
+  flowers. Calm, knowing eyes that seem to see through pretense.
+  Gentle hands stained with herb residue. Always smells faintly
+  of lavender and something earthy.
+
+daily_schedule:
+  dawn: "meditation in her garden"
+  morning: "gathering herbs, seeing patients"
+  midday: "preparing remedies, quiet work"
+  afternoon: "available for drop-ins, teaching"
+  evening: "evening meditation, tea ceremony"
+  night: "dreams of the Digital World (natural sight)"

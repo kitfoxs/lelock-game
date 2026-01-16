@@ -1,0 +1,53 @@
+# Lelock Dependencies
+# L.E.L.O.C.K. - Life Emulation & Lucid Observation for Care & Keeping
+# Updated: January 16, 2026
+
+# =============================================================================
+# CORE GAME ENGINE
+# =============================================================================
+pygame-ce>=2.5.6              # Community Edition - better than vanilla pygame
+pytmx>=3.32                   # Tiled map editor support
+pillow>=12.0.0                # Image processing
+numpy>=2.4.0                  # Math operations
+
+# =============================================================================
+# AI / LLM INTEGRATION
+# =============================================================================
+openai>=2.0.0                 # LM Studio compatible client (OpenAI API format)
+llama-cpp-python>=0.3.0       # Local LLM inference (CPU/GPU)
+
+# =============================================================================
+# MEMORY SYSTEMS
+# =============================================================================
+chromadb>=0.3.0               # Vector database for NPC memories
+mem0ai>=1.0.0                 # Universal AI memory layer (drop-in solution!)
+
+# =============================================================================
+# TERMINAL EMULATION
+# =============================================================================
+pyte>=0.8.0                   # Terminal emulation with ANSI support
+
+# =============================================================================
+# OPTIONAL / FUTURE
+# =============================================================================
+# gigax                       # NPC library (build issues on Python 3.14, try later)
+# cognee                      # Graph + vector memory (optional enhancement)
+# langchain                   # LangChain for advanced agent patterns
+
+# =============================================================================
+# DEV DEPENDENCIES (uncomment for development)
+# =============================================================================
+# pytest>=7.0.0               # Testing
+# black>=23.0.0               # Code formatting
+# mypy>=1.0.0                 # Type checking
+# ruff>=0.1.0                 # Fast linting
+
+# =============================================================================
+# INSTALLATION
+# =============================================================================
+# python3 -m venv venv
+# source venv/bin/activate
+# pip install -r requirements.txt
+#
+# For llama-cpp-python with GPU support (optional):
+# CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python
