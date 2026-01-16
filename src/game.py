@@ -134,6 +134,9 @@ class Game:
         # Debug mode (F3 to toggle)
         self.debug_mode = False
 
+        # Error state for displaying issues
+        self.error_message = None
+
         # Fonts for UI
         self._init_fonts()
 
@@ -207,6 +210,10 @@ class Game:
         old_state = self.state
         self.state = new_state
 
+        # Initialize systems for new state
+        if new_state == GameState.PLAYING and self.level is None:
+            self._start_new_game()
+
         # Start fade back in
         self.transition.direction = 'out'
         self.transition.alpha = 255
@@ -214,6 +221,79 @@ class Game:
 
         if self.debug_mode:
             print(f"[State] {old_state.name} -> {new_state.name}")
+
+    def _start_new_game(self):
+        """Initialize a new game - load level, create player, etc."""
+        from world.level import Level
+        from entities.player import Player
+        from world.digital import DigitalWorld
+        import os
+
+        # Load the Oakhaven map
+        # Try multiple possible paths
+        possible_paths = [
+            'assets/maps/map.tmx',
+            os.path.join(os.path.dirname(__file__), 'assets/maps/map.tmx'),
+            os.path.join(os.path.dirname(__file__), '..', 'assets/maps/map.tmx'),
+        ]
+
+        map_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                map_path = path
+                break
+
+        try:
+            # Create level (with or without map)
+            if map_path:
+                self.level = Level(map_path)
+                print(f"[Game] Level loaded from: {map_path}")
+            else:
+                # Create empty level for testing
+                self.level = Level()
+                # Set some default dimensions
+                self.level.map_width = 1024
+                self.level.map_height = 768
+                self.level.all_sprites.set_map_bounds(1024, 768)
+                print("[Game] No map found - created empty level for testing")
+                print(f"[Game] Searched paths: {possible_paths}")
+
+            # Get spawn position from map, or use center
+            spawn_pos = self.level.get_player_spawn()
+            print(f"[Game] Player spawn position: {spawn_pos}")
+
+            # Create player with proper sprite groups
+            # Player needs: pos, groups, collision_sprites, interaction_sprites
+            self.player = Player(
+                pos=spawn_pos,
+                groups=self.level.all_sprites,
+                collision_sprites=self.level.collision_sprites,
+                interaction_sprites=self.level.interaction_sprites
+            )
+
+            # Register player with level (this also adds to sprite groups and snaps camera)
+            self.level.set_player(self.player)
+            print(f"[Game] Player created at {spawn_pos}")
+
+            # Initialize Digital World overlay
+            self.digital_world = DigitalWorld(self.level)
+            print("[Game] Digital World overlay ready!")
+
+        except Exception as e:
+            print(f"[Game] ERROR loading level: {e}")
+            import traceback
+            traceback.print_exc()
+
+            # Show error on screen by setting error state
+            self._show_error(f"Failed to load level: {e}")
+
+    def _show_error(self, message: str):
+        """
+        Store an error message to be displayed on screen.
+        Errors are visible to help debugging.
+        """
+        self.error_message = message
+        print(f"[Game] ERROR: {message}")
 
     def push_state(self, overlay_state: GameState):
         """
@@ -588,7 +668,12 @@ class Game:
 
     def _render_playing(self):
         """Render the main gameplay."""
-        if self.level:
+        # Show any errors first
+        if self.error_message:
+            self._render_error()
+            return
+
+        if self.level and self.player:
             # Level.run() handles update and render together
             # Pass actual dt for smooth animations
             self.level.run(self.dt)
@@ -596,12 +681,26 @@ class Game:
             # Apply Digital World overlay (if transitioning or in digital realm)
             if self.digital_world and self.digital_world.transition_progress > 0:
                 self.digital_world.render(self.screen)
+
+            # Debug: Show player position
+            if self.debug_mode:
+                pos_text = self.fonts['small'].render(
+                    f"Player: ({self.player.rect.centerx}, {self.player.rect.centery})",
+                    True, (0, 255, 0)
+                )
+                self.screen.blit(pos_text, (10, 100))
         else:
             # Placeholder until level is implemented
             text_color = self._parse_color(COLORS['ui_text'])
-            text = self.fonts['heading'].render(
-                "Oakhaven awaits...", True, text_color
-            )
+
+            if self.level is None:
+                message = "Loading level..."
+            elif self.player is None:
+                message = "Creating player..."
+            else:
+                message = "Oakhaven awaits..."
+
+            text = self.fonts['heading'].render(message, True, text_color)
             text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
             self.screen.blit(text, text_rect)
 
@@ -614,6 +713,48 @@ class Game:
             # If no level but digital world exists, still show the overlay effects
             if self.digital_world and self.digital_world.transition_progress > 0:
                 self.digital_world.render(self.screen)
+
+    def _render_error(self):
+        """Render error message on screen."""
+        # Dark red background
+        self.screen.fill((60, 20, 20))
+
+        # Error title
+        title = self.fonts['heading'].render("Error", True, (255, 100, 100))
+        title_rect = title.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3))
+        self.screen.blit(title, title_rect)
+
+        # Error message (may need wrapping for long messages)
+        if self.error_message:
+            # Simple word wrap
+            words = self.error_message.split()
+            lines = []
+            current_line = []
+            for word in words:
+                test_line = ' '.join(current_line + [word])
+                if self.fonts['body'].size(test_line)[0] < SCREEN_WIDTH - 100:
+                    current_line.append(word)
+                else:
+                    if current_line:
+                        lines.append(' '.join(current_line))
+                    current_line = [word]
+            if current_line:
+                lines.append(' '.join(current_line))
+
+            y = SCREEN_HEIGHT // 2
+            for line in lines[:5]:  # Max 5 lines
+                text = self.fonts['body'].render(line, True, (255, 200, 200))
+                text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, y))
+                self.screen.blit(text, text_rect)
+                y += 35
+
+        # Hint to quit
+        hint = self.fonts['small'].render(
+            "Press ESC then Q to quit, or check console for details",
+            True, (150, 150, 150)
+        )
+        hint_rect = hint.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT * 3 // 4))
+        self.screen.blit(hint, hint_rect)
 
     def _render_pause_overlay(self):
         """Render pause menu over the game."""

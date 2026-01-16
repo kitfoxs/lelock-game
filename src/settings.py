@@ -18,7 +18,7 @@ FPS = 60
 # Screen (Game Boy inspired aspect ratio, scaled up)
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
-TILE_SIZE = 32  # Smaller tiles for retro feel
+TILE_SIZE = 64  # Match map.tmx tileset (64x64 tiles)
 
 # =============================================================================
 # RENDERING LAYERS

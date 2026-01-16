@@ -51,16 +51,8 @@ def main():
     setup_environment()
 
     # Now import pygame and game module (after env is set)
-    try:
-        from game import Game
-    except ImportError:
-        # Handle running from different directories
-        try:
-            from src.game import Game
-        except ImportError as e:
-            print(f"Error: Could not import Game class: {e}")
-            print("Make sure you're running from the correct directory.")
-            sys.exit(1)
+    # Requires PYTHONPATH=src or running with python -m src.main
+    from game import Game
 
     try:
         # Create and run the game

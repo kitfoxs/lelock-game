@@ -6,10 +6,11 @@ This is the beating heart of Lelock's world. Every tree, every NPC,
 every tile exists to make the player feel safe and loved.
 """
 
+import os
 import pygame
 from pytmx.util_pygame import load_pygame
 
-from settings import TILE_SIZE, LAYERS, COLORS
+from settings import TILE_SIZE, LAYERS, COLORS, SCREEN_WIDTH, SCREEN_HEIGHT
 from world.camera import CameraGroup
 
 
@@ -59,6 +60,9 @@ class Level:
         self.map_width = 0
         self.map_height = 0
 
+        # Actual tile size from map (may differ from TILE_SIZE setting)
+        self.map_tile_size = TILE_SIZE
+
         # Weather system placeholder (injected by Game)
         self.weather = None
 
@@ -84,108 +88,82 @@ class Level:
         """
         self.tmx_data = load_pygame(map_path)
 
-        # Calculate map dimensions
-        self.map_width = self.tmx_data.width * TILE_SIZE
-        self.map_height = self.tmx_data.height * TILE_SIZE
+        # Use the tile size from the map itself!
+        self.map_tile_size = self.tmx_data.tilewidth
+
+        # Calculate map dimensions using MAP's tile size
+        self.map_width = self.tmx_data.width * self.map_tile_size
+        self.map_height = self.tmx_data.height * self.map_tile_size
 
         # Tell camera about map bounds
         self.all_sprites.set_map_bounds(self.map_width, self.map_height)
 
-        # Process each layer
-        self._load_ground_layers()
-        self._load_collision_layer()
+        # Load the ground image first (like skeleton does)
+        self._load_ground_image(map_path)
+
+        # Process each layer from the TMX
+        self._load_tile_layers()
         self._load_object_layers()
-        self._load_interaction_layer()
+        self._load_player_layer()
 
-    def _load_ground_layers(self):
+    def _load_ground_image(self, map_path: str):
         """
-        Load visual ground layers (no collision).
+        Load the pre-rendered ground image if it exists.
 
-        Expected Tiled layers:
-        - Ground: Base terrain
-        - Water: Animated water tiles
-        - Paths: Walkable paths
+        The skeleton uses graphics/world/ground.png as the base layer.
+        This is faster than rendering individual tiles.
         """
-        ground_layers = ['Ground', 'Water', 'Paths', 'Decorations']
+        # Try to find ground.png relative to the map
+        map_dir = os.path.dirname(map_path)
 
+        # Check common locations
+        possible_paths = [
+            os.path.join(map_dir, '..', 'graphics', 'world', 'ground.png'),
+            os.path.join(map_dir, 'ground.png'),
+            'assets/graphics/world/ground.png',
+        ]
+
+        for path in possible_paths:
+            if os.path.exists(path):
+                ground_surf = pygame.image.load(path).convert_alpha()
+                GenericSprite(
+                    pos=(0, 0),
+                    surface=ground_surf,
+                    groups=[self.all_sprites],
+                    z=LAYERS['ground']
+                )
+                return
+
+        # No ground.png found - that's okay, we'll render from tiles
+
+    def _load_tile_layers(self):
+        """
+        Load all tile layers from the TMX map.
+
+        Actual layers in our map:
+        - Ground, Forest Grass, Outside Decoration, Hills (ground layer)
+        - Fence (collision)
+        - HouseFloor, HouseWalls, HouseFurnitureBottom, HouseFurnitureTop (house)
+        """
+        tile_size = self.map_tile_size
+
+        # Ground layers (visual only, no collision)
+        ground_layers = ['Ground', 'Forest Grass', 'Outside Decoration', 'Hills']
         for layer_name in ground_layers:
             layer = self._get_layer_safe(layer_name)
             if layer is None:
                 continue
-
-            # Determine render layer
-            if layer_name == 'Water':
-                z = LAYERS['water']
-            elif layer_name == 'Decorations':
-                z = LAYERS['ground_plant']
-            else:
-                z = LAYERS['ground']
-
-            # Create tiles
             for x, y, surface in layer.tiles():
                 if surface:
-                    pos = (x * TILE_SIZE, y * TILE_SIZE)
-                    GenericSprite(pos, surface, [self.all_sprites], z)
+                    pos = (x * tile_size, y * tile_size)
+                    GenericSprite(pos, surface, [self.all_sprites], LAYERS['ground'])
 
-    def _load_collision_layer(self):
-        """
-        Load invisible collision tiles.
-
-        Expected Tiled layer: Collision
-        These are invisible but block player movement.
-        """
-        layer = self._get_layer_safe('Collision')
-        if layer is None:
-            return
-
-        for x, y, surface in layer.tiles():
-            if surface:
-                pos = (x * TILE_SIZE, y * TILE_SIZE)
-                # Create invisible collision rect
-                collision_surf = pygame.Surface((TILE_SIZE, TILE_SIZE))
-                collision_surf.set_alpha(0)  # Invisible
-                GenericSprite(
-                    pos,
-                    collision_surf,
-                    [self.collision_sprites],
-                    z=LAYERS['ground']
-                )
-
-    def _load_object_layers(self):
-        """
-        Load object layers (trees, buildings, etc).
-
-        Expected Tiled object layers:
-        - Trees: Harvestable trees
-        - Buildings: House structures (bottom and top)
-        - Furniture: Interior objects
-        """
-        # House bottom layer (floor, lower walls)
-        for layer_name in ['HouseFloor', 'HouseFurnitureBottom']:
-            layer = self._get_layer_safe(layer_name)
-            if layer is None:
-                continue
-            for x, y, surface in layer.tiles():
-                if surface:
-                    pos = (x * TILE_SIZE, y * TILE_SIZE)
-                    GenericSprite(pos, surface, [self.all_sprites], LAYERS['house_bottom'])
-
-        # House top layer (roofs, upper walls)
-        for layer_name in ['HouseWalls', 'HouseFurnitureTop', 'HouseTop']:
-            layer = self._get_layer_safe(layer_name)
-            if layer is None:
-                continue
-            for x, y, surface in layer.tiles():
-                if surface:
-                    pos = (x * TILE_SIZE, y * TILE_SIZE)
-                    GenericSprite(pos, surface, [self.all_sprites], LAYERS['house_top'])
-
-        # Fence (collision)
+        # Fence (collision + visual)
         layer = self._get_layer_safe('Fence')
         if layer:
             for x, y, surface in layer.tiles():
                 if surface:
-                    pos = (x * TILE_SIZE, y * TILE_SIZE)
+                    pos = (x * tile_size, y * tile_size)
                     GenericSprite(
                         pos,
                         surface,
@@ -193,25 +171,82 @@ class Level:
                         LAYERS['main']
                     )
 
-    def _load_interaction_layer(self):
-        """
-        Load interaction zones (NPCs, beds, terminals, etc).
+        # House bottom layer (floor, lower furniture)
+        for layer_name in ['HouseFloor', 'HouseFurnitureBottom']:
+            layer = self._get_layer_safe(layer_name)
+            if layer is None:
+                continue
+            for x, y, surface in layer.tiles():
+                if surface:
+                    pos = (x * tile_size, y * tile_size)
+                    GenericSprite(pos, surface, [self.all_sprites], LAYERS['house_bottom'])
 
-        Expected Tiled object layer: Interactions
-        Objects should have 'name' property indicating type.
+        # House walls and top (rendered above player)
+        for layer_name in ['HouseWalls', 'HouseFurnitureTop']:
+            layer = self._get_layer_safe(layer_name)
+            if layer is None:
+                continue
+            for x, y, surface in layer.tiles():
+                if surface:
+                    pos = (x * tile_size, y * tile_size)
+                    GenericSprite(pos, surface, [self.all_sprites], LAYERS['main'])
+
+    def _load_object_layers(self):
         """
-        layer = self._get_layer_safe('Player')  # Skeleton uses 'Player' layer
-        if layer is None:
-            layer = self._get_layer_safe('Interactions')
+        Load object layers (Trees, Decoration).
+
+        Objects have x, y, width, height, and image properties.
+        """
+        # Trees (collision + visual)
+        layer = self._get_layer_safe('Trees')
+        if layer:
+            for obj in layer:
+                if hasattr(obj, 'image') and obj.image:
+                    GenericSprite(
+                        pos=(obj.x, obj.y),
+                        surface=obj.image,
+                        groups=[self.all_sprites, self.collision_sprites, self.tree_sprites],
+                        z=LAYERS['main']
+                    )
+
+        # Decoration objects (wildflowers, etc - collision)
+        layer = self._get_layer_safe('Decoration')
+        if layer:
+            for obj in layer:
+                if hasattr(obj, 'image') and obj.image:
+                    GenericSprite(
+                        pos=(obj.x, obj.y),
+                        surface=obj.image,
+                        groups=[self.all_sprites, self.collision_sprites],
+                        z=LAYERS['main']
+                    )
+
+        # Generic objects layer
+        layer = self._get_layer_safe('Objects')
+        if layer:
+            for obj in layer:
+                if hasattr(obj, 'image') and obj.image:
+                    GenericSprite(
+                        pos=(obj.x, obj.y),
+                        surface=obj.image,
+                        groups=[self.all_sprites],
+                        z=LAYERS['main']
+                    )
+
+    def _load_player_layer(self):
+        """
+        Load player spawn point and interaction zones from Player layer.
+        """
+        layer = self._get_layer_safe('Player')
         if layer is None:
             return
 
         for obj in layer:
-            # Skip player start position (handled separately)
+            # Skip player start position (handled by get_player_spawn)
             if obj.name == 'Start':
                 continue
 
-            # Create interaction zone
+            # Create interaction zones for Bed, Trader, etc
             if hasattr(obj, 'width') and hasattr(obj, 'height'):
                 InteractionSprite(
                     (obj.x, obj.y),
@@ -233,6 +268,18 @@ class Level:
         except ValueError:
             # Layer doesn't exist - that's okay during development
             return None
+
+    def _parse_color(self, color_str: str) -> tuple:
+        """
+        Parse a hex color string to RGB tuple.
+        Safety: Always returns a valid color.
+        """
+        try:
+            if color_str.startswith('#'):
+                color_str = color_str[1:]
+            return tuple(int(color_str[i:i+2], 16) for i in (0, 2, 4))
+        except (ValueError, IndexError):
+            return (26, 26, 46)  # Fallback to warm dark blue
 
     def get_player_spawn(self) -> tuple:
         """
@@ -333,11 +380,19 @@ class Level:
             dt: Delta time for frame-independent updates
         """
         # Clear screen with cozy background color
-        self.display_surface.fill(COLORS['background'])
+        # Parse hex color to RGB tuple if needed
+        bg_color = COLORS['background']
+        if isinstance(bg_color, str) and bg_color.startswith('#'):
+            bg_color = tuple(int(bg_color[i:i+2], 16) for i in (1, 3, 5))
+        self.display_surface.fill(bg_color)
 
         # Draw all sprites with camera offset
         if self.player:
             self.all_sprites.custom_draw(self.player, dt)
+        else:
+            # No player yet - still draw sprites centered
+            # Create a temporary target at map center for camera
+            self._draw_without_player()
 
         # Update sprites (only if menu not active)
         if not self.menu_active:
@@ -350,6 +405,33 @@ class Level:
         # Time-of-day sky overlay
         if self.sky_overlay:
             self.sky_overlay.display(dt)
+
+    def _draw_without_player(self):
+        """
+        Draw sprites when there's no player yet.
+        Centers camera on map center.
+        """
+        # Calculate offset to center the map
+        offset_x = self.map_width / 2 - SCREEN_WIDTH / 2
+        offset_y = self.map_height / 2 - SCREEN_HEIGHT / 2
+
+        # Get all layer values and sort them
+        layer_values = sorted(LAYERS.values())
+
+        # Draw sprites layer by layer
+        for layer in layer_values:
+            layer_sprites = [
+                sprite for sprite in self.all_sprites.sprites()
+                if hasattr(sprite, 'z') and sprite.z == layer
+            ]
+
+            for sprite in sorted(layer_sprites, key=lambda s: s.rect.centery):
+                offset_rect = sprite.rect.copy()
+                offset_rect.center = (
+                    sprite.rect.centerx - offset_x,
+                    sprite.rect.centery - offset_y
+                )
+                self.display_surface.blit(sprite.image, offset_rect)
 
 
 class GenericSprite(pygame.sprite.Sprite):
@@ -380,6 +462,9 @@ class GenericSprite(pygame.sprite.Sprite):
         self.image = surface
         self.rect = self.image.get_rect(topleft=pos)
         self.z = z
+
+        # Hitbox for collision (same as rect by default)
+        self.hitbox = self.rect.copy()
 
 
 class InteractionSprite(pygame.sprite.Sprite):

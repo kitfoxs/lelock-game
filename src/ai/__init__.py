@@ -17,9 +17,9 @@ from .llm import (
     LLMConnection,
     ConnectionStatus,
     GenerationConfig,
+    LLMUnavailableError,
     get_connection,
     quick_generate,
-    FALLBACK_RESPONSES,
 )
 
 from .memory import (
@@ -50,11 +50,10 @@ __all__ = [
     "LLMConnection",
     "ConnectionStatus",
     "GenerationConfig",
+    "LLMUnavailableError",
     # LLM convenience functions
     "get_connection",
     "quick_generate",
-    # LLM constants
-    "FALLBACK_RESPONSES",
 
     # Memory classes
     "NPCMemory",

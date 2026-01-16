@@ -6,6 +6,7 @@ The player - a child in a cozy world that exists to care for them.
 No death. No failure. Just growth and comfort.
 """
 
+import os
 import pygame
 from typing import Dict, List, Optional, Tuple, Callable
 from pygame.math import Vector2
@@ -13,7 +14,6 @@ from pygame.math import Vector2
 from settings import (
     LAYERS, PLAYER_SPEED, PLAYER_TOOL_OFFSET, CLASSES
 )
-from entities.sprites import AnimatedSprite
 
 
 class Timer:
@@ -45,7 +45,33 @@ class Timer:
                 self.deactivate()
 
 
-class Player(AnimatedSprite):
+def import_folder(path: str) -> List[pygame.Surface]:
+    """Import all images from a folder and return as list of surfaces."""
+    surface_list = []
+
+    if not os.path.exists(path):
+        # Return a placeholder if folder doesn't exist
+        placeholder = pygame.Surface((48, 64), pygame.SRCALPHA)
+        pygame.draw.ellipse(placeholder, (100, 150, 200), (8, 12, 32, 48))
+        return [placeholder]
+
+    for _, __, img_files in os.walk(path):
+        for image in sorted(img_files):  # Sort for consistent frame order
+            if image.endswith(('.png', '.jpg', '.jpeg')):
+                full_path = os.path.join(path, image)
+                image_surf = pygame.image.load(full_path).convert_alpha()
+                surface_list.append(image_surf)
+
+    # Return placeholder if no images found
+    if not surface_list:
+        placeholder = pygame.Surface((48, 64), pygame.SRCALPHA)
+        pygame.draw.ellipse(placeholder, (100, 150, 200), (8, 12, 32, 48))
+        return [placeholder]
+
+    return surface_list
+
+
+class Player(pygame.sprite.Sprite):
     """
     The player character in Lelock.
 
@@ -68,17 +94,19 @@ class Player(AnimatedSprite):
         interaction_sprites: Optional[pygame.sprite.Group] = None,
         class_type: str = 'gardener'
     ):
-        # Initialize with placeholder animations (will be loaded properly later)
-        # For now, create simple colored rectangles
-        placeholder_animations = self._create_placeholder_animations()
+        super().__init__(groups)
 
-        super().__init__(
-            pos=pos,
-            frames=placeholder_animations,
-            groups=groups,
-            z=LAYERS['main'],
-            animation_speed=4.0
-        )
+        # Load character sprites
+        self.import_assets()
+
+        # Animation state
+        self.status = 'down'
+        self.frame_index = 0
+
+        # Setup image and rect from loaded animations
+        self.image = self.animations[self.status][self.frame_index]
+        self.rect = self.image.get_rect(center=pos)
+        self.z = LAYERS['main']
 
         # Position tracking (float precision for smooth movement)
         self.pos = Vector2(self.rect.center)
@@ -88,11 +116,10 @@ class Player(AnimatedSprite):
         # Collision
         self.collision_sprites = collision_sprites
         self.interaction_sprites = interaction_sprites or pygame.sprite.Group()
-        # Smaller hitbox than sprite for better feel
-        self.hitbox = self.rect.copy().inflate(-self.rect.width * 0.5, -self.rect.height * 0.6)
+        # Hitbox smaller than sprite for better feel (matches skeleton proportions)
+        self.hitbox = self.rect.copy().inflate(-126, -70)
 
         # Status tracking
-        self.status = 'idle_down'
         self.facing_direction = 'down'
         self.is_moving = False
         self.using_tool = False
@@ -121,20 +148,20 @@ class Player(AnimatedSprite):
         # -----------------------------
         # TOOL SYSTEM
         # -----------------------------
-        self.tools = ['hoe', 'axe', 'water', 'fishing_rod']
+        self.tools = ['hoe', 'axe', 'water']
         self.tool_index = 0
-        self.current_tool = self.tools[self.tool_index]
+        self.selected_tool = self.tools[self.tool_index]
         self.target_pos = Vector2(0, 0)
 
         # Seeds for planting
         self.seeds = ['copper_wheat', 'silicon_berries']
         self.seed_index = 0
-        self.current_seed = self.seeds[self.seed_index]
+        self.selected_seed = self.seeds[self.seed_index]
 
         # -----------------------------
         # INVENTORY (basic for now)
         # -----------------------------
-        self.inventory: Dict[str, int] = {
+        self.item_inventory: Dict[str, int] = {
             'wood': 0,
             'stone': 0,
             'copper_wheat': 0,
@@ -149,53 +176,42 @@ class Player(AnimatedSprite):
         # TIMERS (cooldowns)
         # -----------------------------
         self.timers = {
-            'tool_use': Timer(350, self._on_tool_use_complete),
-            'tool_switch': Timer(200),
-            'seed_use': Timer(350, self._on_seed_use_complete),
-            'seed_switch': Timer(200),
+            'tool use': Timer(350, self._on_tool_use_complete),
+            'tool switch': Timer(200),
+            'seed use': Timer(350, self._on_seed_use_complete),
+            'seed switch': Timer(200),
         }
 
-    def _create_placeholder_animations(self) -> Dict[str, List[pygame.Surface]]:
-        """Create simple placeholder animations until real assets are loaded."""
-        animations = {}
-        directions = ['down', 'up', 'left', 'right']
+    def import_assets(self) -> None:
+        """Load all character animation sprites from disk."""
+        # Animation dictionary matching skeleton's folder structure
+        self.animations = {
+            # Walking animations (direction only)
+            'up': [], 'down': [], 'left': [], 'right': [],
+            # Idle animations (direction_idle)
+            'up_idle': [], 'down_idle': [], 'left_idle': [], 'right_idle': [],
+            # Tool animations (direction_tool)
+            'up_hoe': [], 'down_hoe': [], 'left_hoe': [], 'right_hoe': [],
+            'up_axe': [], 'down_axe': [], 'left_axe': [], 'right_axe': [],
+            'up_water': [], 'down_water': [], 'left_water': [], 'right_water': [],
+        }
 
-        # Colors for different states
-        idle_color = (100, 150, 200)  # Soft blue
-        walk_color = (120, 180, 220)  # Lighter blue
-        tool_color = (200, 150, 100)  # Warm orange
+        # Get the path to graphics folder
+        # From src/entities/player.py -> assets/graphics/character/
+        current_dir = os.path.dirname(__file__)
+        graphics_path = os.path.join(current_dir, '..', '..', 'assets', 'graphics', 'character')
+        graphics_path = os.path.abspath(graphics_path)
 
-        for direction in directions:
-            # Idle animations (single frame)
-            surf = pygame.Surface((32, 48), pygame.SRCALPHA)
-            pygame.draw.ellipse(surf, idle_color, (4, 8, 24, 36))
-            # Direction indicator
-            indicator_pos = {
-                'down': (16, 40),
-                'up': (16, 12),
-                'left': (6, 26),
-                'right': (26, 26)
-            }
-            pygame.draw.circle(surf, (255, 255, 255), indicator_pos[direction], 4)
-            animations[f'idle_{direction}'] = [surf]
+        for animation in self.animations.keys():
+            folder_path = os.path.join(graphics_path, animation)
+            self.animations[animation] = import_folder(folder_path)
 
-            # Walk animations (simple 2-frame)
-            walk_frames = []
-            for i in range(2):
-                surf = pygame.Surface((32, 48), pygame.SRCALPHA)
-                offset = 2 if i == 0 else -2
-                pygame.draw.ellipse(surf, walk_color, (4, 8 + offset, 24, 36))
-                pygame.draw.circle(surf, (255, 255, 255), indicator_pos[direction], 4)
-                walk_frames.append(surf)
-            animations[f'walk_{direction}'] = walk_frames
-
-            # Tool animations (placeholder)
-            surf = pygame.Surface((32, 48), pygame.SRCALPHA)
-            pygame.draw.ellipse(surf, tool_color, (4, 8, 24, 36))
-            pygame.draw.circle(surf, (255, 200, 100), indicator_pos[direction], 4)
-            animations[f'tool_{direction}'] = [surf]
-
-        return animations
+    def get_target_pos(self) -> None:
+        """Calculate target position for tool use based on facing direction."""
+        # Get base direction from status (e.g., 'down' from 'down_idle' or 'down_hoe')
+        base_direction = self.status.split('_')[0]
+        offset = PLAYER_TOOL_OFFSET.get(base_direction, Vector2(0, 50))
+        self.target_pos = Vector2(self.rect.center) + offset
 
     # =========================================================================
     # INPUT HANDLING
@@ -203,100 +219,68 @@ class Player(AnimatedSprite):
 
     def input(self) -> None:
         """Process keyboard input for movement and actions."""
-        # Can't move while using tool, sleeping, or fainted
-        if self.timers['tool_use'].active or self.sleeping or self.fainted:
-            return
-
         keys = pygame.key.get_pressed()
 
-        # Reset direction
-        self.direction.x = 0
-        self.direction.y = 0
+        # Can't move while using tool or sleeping
+        if not self.timers['tool use'].active and not self.sleeping and not self.fainted:
+            # Movement: WASD and Arrow Keys
+            if keys[pygame.K_w] or keys[pygame.K_UP]:
+                self.direction.y = -1
+                self.status = 'up'
+            elif keys[pygame.K_s] or keys[pygame.K_DOWN]:
+                self.direction.y = 1
+                self.status = 'down'
+            else:
+                self.direction.y = 0
 
-        # Movement: WASD and Arrow Keys (8-directional)
-        if keys[pygame.K_w] or keys[pygame.K_UP]:
-            self.direction.y = -1
-            self.facing_direction = 'up'
-        elif keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            self.direction.y = 1
-            self.facing_direction = 'down'
+            if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+                self.direction.x = -1
+                self.status = 'left'
+            elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+                self.direction.x = 1
+                self.status = 'right'
+            else:
+                self.direction.x = 0
 
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            self.direction.x = -1
-            self.facing_direction = 'left'
-        elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.direction.x = 1
-            self.facing_direction = 'right'
+            # Tool use (Space)
+            if keys[pygame.K_SPACE]:
+                self.timers['tool use'].activate()
+                self.direction = Vector2(0, 0)
+                self.frame_index = 0
 
-        # Tool use (Space)
-        if keys[pygame.K_SPACE] and not self.timers['tool_use'].active:
-            self._start_tool_use()
+            # Tool switch (Q)
+            if keys[pygame.K_q] and not self.timers['tool switch'].active:
+                self.timers['tool switch'].activate()
+                self.tool_index = (self.tool_index + 1) % len(self.tools)
+                self.selected_tool = self.tools[self.tool_index]
 
-        # Tool switch (Q)
-        if keys[pygame.K_q] and not self.timers['tool_switch'].active:
-            self._switch_tool()
+            # Seed use (Left Ctrl)
+            if keys[pygame.K_LCTRL]:
+                self.timers['seed use'].activate()
+                self.direction = Vector2(0, 0)
+                self.frame_index = 0
 
-        # Seed use (Left Ctrl / E for planting)
-        if keys[pygame.K_LCTRL] and not self.timers['seed_use'].active:
-            self._start_seed_use()
+            # Seed switch (E)
+            if keys[pygame.K_e] and not self.timers['seed switch'].active:
+                self.timers['seed switch'].activate()
+                self.seed_index = (self.seed_index + 1) % len(self.seeds)
+                self.selected_seed = self.seeds[self.seed_index]
 
-        # Seed switch (E when not planting)
-        if keys[pygame.K_e] and not self.timers['seed_switch'].active:
-            self._switch_seed()
-
-        # Interaction (Enter/Return)
-        if keys[pygame.K_RETURN]:
-            self._check_interaction()
-
-    def _start_tool_use(self) -> None:
-        """Begin using current tool."""
-        self.timers['tool_use'].activate()
-        self.direction = Vector2(0, 0)
-        self.using_tool = True
-        self.frame_index = 0
-
-        # Calculate target position based on facing direction
-        offset = PLAYER_TOOL_OFFSET.get(self.facing_direction, Vector2(0, 50))
-        self.target_pos = Vector2(self.rect.center) + offset
-
-        # Energy cost for tools (but NEVER prevent basic actions)
-        self._use_energy(5)
+            # Interaction (Enter/Return)
+            if keys[pygame.K_RETURN]:
+                self._check_interaction()
 
     def _on_tool_use_complete(self) -> None:
         """Called when tool use timer expires."""
         self.using_tool = False
-        # Actual tool effect would be triggered here
-        # For now, just a placeholder
-
-    def _start_seed_use(self) -> None:
-        """Begin planting current seed."""
-        if self.seed_inventory.get(self.current_seed, 0) > 0:
-            self.timers['seed_use'].activate()
-            self.direction = Vector2(0, 0)
-            self.frame_index = 0
-
-            offset = PLAYER_TOOL_OFFSET.get(self.facing_direction, Vector2(0, 50))
-            self.target_pos = Vector2(self.rect.center) + offset
-
-            self._use_energy(2)
+        # Actual tool effect would be triggered here via callback
+        self._use_energy(5)
 
     def _on_seed_use_complete(self) -> None:
         """Called when seed planting timer expires."""
-        if self.seed_inventory.get(self.current_seed, 0) > 0:
-            self.seed_inventory[self.current_seed] -= 1
-            # Actual planting would be triggered here
-
-    def _switch_tool(self) -> None:
-        """Cycle to next tool."""
-        self.timers['tool_switch'].activate()
-        self.tool_index = (self.tool_index + 1) % len(self.tools)
-        self.current_tool = self.tools[self.tool_index]
-
-    def _switch_seed(self) -> None:
-        """Cycle to next seed type."""
-        self.timers['seed_switch'].activate()
-        self.seed_index = (self.seed_index + 1) % len(self.seeds)
-        self.current_seed = self.seeds[self.seed_index]
+        if self.seed_inventory.get(self.selected_seed, 0) > 0:
+            self.seed_inventory[self.selected_seed] -= 1
+            self._use_energy(2)
 
     def _check_interaction(self) -> None:
         """Check for interactable objects and interact."""
@@ -305,14 +289,37 @@ class Player(AnimatedSprite):
         )
         if collided:
             interaction = collided[0]
-            # Handle different interaction types
             if hasattr(interaction, 'name'):
                 if interaction.name == 'Bed':
-                    self.sleep()
+                    self.status = 'left_idle'
+                    self.sleeping = True
                 elif interaction.name == 'Terminal':
                     pass  # Digital world toggle
-                elif interaction.name == 'NPC':
-                    pass  # Dialogue trigger
+                elif interaction.name == 'Trader':
+                    pass  # Shop toggle
+
+    # =========================================================================
+    # STATUS & ANIMATION
+    # =========================================================================
+
+    def get_status(self) -> None:
+        """Determine current animation status based on state."""
+        # Add _idle suffix when not moving
+        if self.direction.magnitude() == 0:
+            self.status = self.status.split('_')[0] + '_idle'
+
+        # Tool use overrides with tool name
+        if self.timers['tool use'].active:
+            self.status = self.status.split('_')[0] + '_' + self.selected_tool
+
+    def animate(self, dt: float) -> None:
+        """Advance animation frame based on delta time."""
+        self.frame_index += 4 * dt
+
+        if self.frame_index >= len(self.animations[self.status]):
+            self.frame_index = 0
+
+        self.image = self.animations[self.status][int(self.frame_index)]
 
     # =========================================================================
     # MOVEMENT & COLLISION
@@ -328,55 +335,34 @@ class Player(AnimatedSprite):
         self.pos.x += self.direction.x * self.speed * dt
         self.hitbox.centerx = round(self.pos.x)
         self.rect.centerx = self.hitbox.centerx
-        self._collision('horizontal')
+        self.collision('horizontal')
 
         # Vertical movement
         self.pos.y += self.direction.y * self.speed * dt
         self.hitbox.centery = round(self.pos.y)
-        self.rect.centery = self.hitbox.centery
-        self._collision('vertical')
+        self.rect.centery = round(self.pos.y)
+        self.collision('vertical')
 
-    def _collision(self, direction: str) -> None:
+    def collision(self, direction: str) -> None:
         """Handle collision with world objects."""
         for sprite in self.collision_sprites.sprites():
-            if not hasattr(sprite, 'hitbox'):
-                continue
+            if hasattr(sprite, 'hitbox'):
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if direction == 'horizontal':
+                        if self.direction.x > 0:  # Moving right
+                            self.hitbox.right = sprite.hitbox.left
+                        if self.direction.x < 0:  # Moving left
+                            self.hitbox.left = sprite.hitbox.right
+                        self.rect.centerx = self.hitbox.centerx
+                        self.pos.x = self.hitbox.centerx
 
-            if sprite.hitbox.colliderect(self.hitbox):
-                if direction == 'horizontal':
-                    if self.direction.x > 0:  # Moving right
-                        self.hitbox.right = sprite.hitbox.left
-                    elif self.direction.x < 0:  # Moving left
-                        self.hitbox.left = sprite.hitbox.right
-                    self.rect.centerx = self.hitbox.centerx
-                    self.pos.x = self.hitbox.centerx
-
-                elif direction == 'vertical':
-                    if self.direction.y > 0:  # Moving down
-                        self.hitbox.bottom = sprite.hitbox.top
-                    elif self.direction.y < 0:  # Moving up
-                        self.hitbox.top = sprite.hitbox.bottom
-                    self.rect.centery = self.hitbox.centery
-                    self.pos.y = self.hitbox.centery
-
-    # =========================================================================
-    # STATUS & ANIMATION
-    # =========================================================================
-
-    def get_status(self) -> None:
-        """Determine current animation status based on state."""
-        # Tool use takes priority
-        if self.timers['tool_use'].active:
-            self.status = f'tool_{self.facing_direction}'
-            return
-
-        # Walking vs idle
-        if self.direction.magnitude() > 0:
-            self.status = f'walk_{self.facing_direction}'
-            self.is_moving = True
-        else:
-            self.status = f'idle_{self.facing_direction}'
-            self.is_moving = False
+                    if direction == 'vertical':
+                        if self.direction.y > 0:  # Moving down
+                            self.hitbox.bottom = sprite.hitbox.top
+                        if self.direction.y < 0:  # Moving up
+                            self.hitbox.top = sprite.hitbox.bottom
+                        self.rect.centery = self.hitbox.centery
+                        self.pos.y = self.hitbox.centery
 
     # =========================================================================
     # STATS & RESOURCES
@@ -399,7 +385,6 @@ class Player(AnimatedSprite):
     def restore_energy(self, amount: int) -> None:
         """Restore energy (from food, rest, etc.)."""
         self.energy = min(self.max_energy, self.energy + amount)
-        # Restore speed if energy is back up
         if self.energy > 20:
             self.speed = PLAYER_SPEED
 
@@ -417,7 +402,6 @@ class Player(AnimatedSprite):
         """Restore health."""
         self.health = min(self.max_health, self.health + amount)
 
-        # Recover from fainted state
         if self.fainted and self.health > 0:
             self.fainted = False
 
@@ -428,8 +412,6 @@ class Player(AnimatedSprite):
         """
         self.fainted = True
         self.direction = Vector2(0, 0)
-        # Game will check this flag and trigger the "warp home" sequence
-        # Player wakes up in bed, Mom brings soup, all is well
 
     def sleep(self) -> None:
         """
@@ -438,9 +420,7 @@ class Player(AnimatedSprite):
         """
         self.sleeping = True
         self.direction = Vector2(0, 0)
-        self.status = f'idle_{self.facing_direction}'
-        # Game will check this flag and trigger sleep transition
-        # Next morning: full health, full energy, gentle sunrise
+        self.status = 'left_idle'
 
     def wake_up(self) -> None:
         """Called by game after sleep transition."""
@@ -461,10 +441,10 @@ class Player(AnimatedSprite):
 
     def add_item(self, item: str, amount: int = 1) -> None:
         """Add item to inventory."""
-        if item in self.inventory:
-            self.inventory[item] += amount
+        if item in self.item_inventory:
+            self.item_inventory[item] += amount
         else:
-            self.inventory[item] = amount
+            self.item_inventory[item] = amount
 
     # =========================================================================
     # TOOL SYSTEM
@@ -475,8 +455,8 @@ class Player(AnimatedSprite):
         Execute the current tool action.
         Returns the tool name for external handling (soil, trees, etc.)
         """
-        if self.timers['tool_use'].active:
-            return self.current_tool
+        if self.timers['tool use'].active:
+            return self.selected_tool
         return None
 
     def get_tool_target(self) -> Vector2:
@@ -494,12 +474,10 @@ class Player(AnimatedSprite):
 
     def update(self, dt: float) -> None:
         """Main update loop - called every frame."""
-        # Don't update if fainted (game handles that state)
-        if self.fainted:
-            return
-
         self.input()
         self.get_status()
         self.update_timers()
+        self.get_target_pos()
+
         self.move(dt)
         self.animate(dt)

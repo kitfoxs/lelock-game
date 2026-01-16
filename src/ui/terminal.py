@@ -32,9 +32,6 @@ from enum import Enum, auto
 from typing import Optional, List, Dict, Callable, Any, Tuple
 from dataclasses import dataclass, field
 
-import os
-import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT, COLORS, DIGITAL_COLORS
 
 

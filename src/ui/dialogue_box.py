@@ -34,11 +34,7 @@ import time
 from enum import Enum, auto
 from typing import Optional, Tuple, List, Callable, Dict, Any
 from dataclasses import dataclass, field
-import os
-import sys
 
-# Import from parent directory
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from settings import COLORS, SCREEN_WIDTH, SCREEN_HEIGHT, LAYERS
 
 

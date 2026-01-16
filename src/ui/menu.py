@@ -11,13 +11,9 @@ Design Philosophy:
 """
 
 import pygame
-from typing import List, Callable, Optional, Tuple
-import os
 import math
+from typing import List, Callable, Optional, Tuple
 
-# Import from parent directory
-import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from settings import COLORS, SCREEN_WIDTH, SCREEN_HEIGHT
 
 

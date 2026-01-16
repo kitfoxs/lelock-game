@@ -14,15 +14,11 @@ Design Philosophy:
 """
 
 import pygame
+import json
 from typing import Dict, List, Optional, Tuple, Callable, Any, Set
 from dataclasses import dataclass, field
 from enum import Enum, auto
-import json
-import os
 
-# Import from parent directory
-import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from settings import COLORS, SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE
 
 

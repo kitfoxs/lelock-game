@@ -11,11 +11,7 @@ Design Philosophy:
 
 import pygame
 from typing import Optional, Tuple
-import os
 
-# Import from parent directory
-import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from settings import COLORS, SCREEN_WIDTH, SCREEN_HEIGHT
 
 
